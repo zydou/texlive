@@ -41,28 +41,9 @@ jobs:
         with:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWD }}
-      - name: Build and export to Docker
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: Dockerfile
-          load: true
-          build-args: SCHEME=${{ matrix.scheme }}
-          tags: texlive:${{ matrix.scheme }}
-      - name: Test
-        run: |
-          docker run --rm texlive:${{ matrix.scheme }} pdflatex --version
-          cat <<EOF >test.tex
-          \documentclass{article}
-          \usepackage{amsfonts}
-          \begin{document}
-          test
-          \end{document}
-          EOF
-          docker run --rm -v $(pwd):/data -w /data texlive:${{ matrix.scheme }} pdflatex test.tex
-          file test.pdf | grep -q ' PDF '
       - name: Build and push
         uses: docker/build-push-action@v2
+        if: ${{ matrix.scheme != 'full' }}
         with:
           context: .
           file: Dockerfile
@@ -74,7 +55,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}
             ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}
-      - name: Tag year for scheme-full
+      - name: Tag year only for scheme-full
         uses: docker/build-push-action@v2
         if: ${{ matrix.scheme == 'full' }}
         with:
@@ -84,10 +65,26 @@ jobs:
           push: true
           build-args: SCHEME=${{ matrix.scheme }}
           tags: |
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}
             ghcr.io/${{ github.repository_owner }}/texlive:latest
             ghcr.io/${{ github.repository_owner }}/texlive:2022
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}
             ${{ github.repository_owner }}/texlive:latest
             ${{ github.repository_owner }}/texlive:2022
+      - name: Test
+        run: |
+          docker run --rm ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }} pdflatex --version
+          cat <<EOF >test.tex
+          \documentclass{article}
+          \usepackage{amsfonts}
+          \begin{document}
+          test
+          \end{document}
+          EOF
+          docker run --rm -v $(pwd):/data -w /data ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }} pdflatex test.tex
+          file test.pdf | grep -q ' PDF '
   build-with-doc:
     strategy:
       matrix:
@@ -116,28 +113,9 @@ jobs:
         with:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWD }}
-      - name: Build and export to Docker
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: Dockerfile
-          load: true
-          build-args: SCHEME=${{ matrix.scheme }}
-          tags: texlive:${{ matrix.scheme }}
-      - name: Test
-        run: |
-          docker run --rm texlive:${{ matrix.scheme }} pdflatex --version
-          cat <<EOF >test.tex
-          \documentclass{article}
-          \usepackage{amsfonts}
-          \begin{document}
-          test
-          \end{document}
-          EOF
-          docker run --rm -v $(pwd):/data -w /data texlive:${{ matrix.scheme }} pdflatex test.tex
-          file test.pdf | grep -q ' PDF '
       - name: Build and push
         uses: docker/build-push-action@v2
+        if: ${{ matrix.scheme != 'full' }}
         with:
           context: .
           file: Dockerfile
@@ -149,9 +127,9 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc
             ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc
-      - name: Tag year for scheme-full
+      - name: Tag year only for scheme-full
         uses: docker/build-push-action@v2
-        if: ${{ matrix.scheme == 'basic' }}
+        if: ${{ matrix.scheme == 'full' }}
         with:
           context: .
           file: Dockerfile
@@ -159,10 +137,26 @@ jobs:
           push: true
           build-args: SCHEME=${{ matrix.scheme }}
           tags: |
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc
             ghcr.io/${{ github.repository_owner }}/texlive:latest-doc
             ghcr.io/${{ github.repository_owner }}/texlive:2022-doc
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc
             ${{ github.repository_owner }}/texlive:latest-doc
             ${{ github.repository_owner }}/texlive:2022-doc
+      - name: Test
+        run: |
+          docker run --rm ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc pdflatex --version
+          cat <<EOF >test.tex
+          \documentclass{article}
+          \usepackage{amsfonts}
+          \begin{document}
+          test
+          \end{document}
+          EOF
+          docker run --rm -v $(pwd):/data -w /data ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc pdflatex test.tex
+          file test.pdf | grep -q ' PDF '
   final:
     name: Clean-up and add README
     if: ${{ always() }}
