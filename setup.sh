@@ -29,6 +29,7 @@ apk --no-cache add \
   ghostscript \
   gnupg \
   graphviz \
+  msttcorefonts-installer \
   openjdk11-jre-headless \
   perl \
   py-pygments \
@@ -71,6 +72,7 @@ retry 3 /tmp/install-tl/installer/install-tl -scheme ${SCHEME} -repository "http
 # System font configuration for XeTeX and LuaTeX
 # Ref: https://www.tug.org/texlive/doc/texlive-en/texlive-en.html#x1-330003.4.4
 ln -s /usr/local/texlive/texdir/texmf-var/fonts/conf/texlive-fontconfig.conf /etc/fonts/conf.d/09-texlive.conf
+update-ms-fonts
 fc-cache -fv
 
 echo "==> Clean up"
