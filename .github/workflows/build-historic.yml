@@ -5,9 +5,10 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - .github/workflows/build-latest.yml
-      - README.md
+    paths:
+      - .github/workflows/build-historic.yml
+      - Dockerfile
+      - setup.sh
 permissions: write-all
 
 jobs:
