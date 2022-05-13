@@ -24,6 +24,9 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v3
+      - name: Set date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -53,6 +56,10 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode
             ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
       - name: Tag year only for scheme-full
         uses: docker/build-push-action@v2
         if: ${{ matrix.scheme == 'full' }}
@@ -71,6 +78,14 @@ jobs:
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode
             ${{ github.repository_owner }}/texlive:latest-vscode
             ${{ github.repository_owner }}/texlive:2022-vscode
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:latest-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:2022-vscode-nightly-${{ steps.date.outputs.date }}
       - name: Test
         run: |
           docker run --rm ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode pdflatex --version
@@ -92,6 +107,9 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v3
+      - name: Set date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -121,6 +139,10 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode
             ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
       - name: Tag year only for scheme-full
         uses: docker/build-push-action@v2
         if: ${{ matrix.scheme == 'full' }}
@@ -139,6 +161,14 @@ jobs:
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode
             ${{ github.repository_owner }}/texlive:latest-doc-vscode
             ${{ github.repository_owner }}/texlive:2022-doc-vscode
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:latest-doc-vscode-nightly-${{ steps.date.outputs.date }}
+            ${{ github.repository_owner }}/texlive:2022-doc-vscode-nightly-${{ steps.date.outputs.date }}
       - name: Test
         run: |
           docker run --rm ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode pdflatex --version
