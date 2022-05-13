@@ -9,6 +9,8 @@ on:
       - .github/workflows/build-latest-vscode.yml
       - vscode.Dockerfile
       - vscode.sh
+  schedule:
+    - cron: "0 18 * * *"
 permissions: write-all
 
 jobs:
