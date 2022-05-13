@@ -72,3 +72,5 @@ tlmgr update --all
 # cleanup
 apk del -r curl
 rm -f /vscode.sh
+rm -f /usr/local/texlive/texdir/texmf-var/web2c/tlmgr-commands.log
+rm -f /usr/local/texlive/texdir/texmf-var/web2c/tlmgr.log
