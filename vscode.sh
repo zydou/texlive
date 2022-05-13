@@ -65,3 +65,10 @@ ${binpath} --force --extensions-dir ${extdir} --install-extension james-yu.latex
 ${binpath} --force --extensions-dir ${extdir} --install-extension yzhang.dictionary-completion
 ${binpath} --force --extensions-dir ${extdir} --install-extension streetsidesoftware.code-spell-checker
 ${binpath} --force --extensions-dir ${extdir} --install-extension JeffersonQin.latex-snippets-jeff
+
+# update CTAN packages
+tlmgr update --all
+
+# cleanup
+apk del -r curl
+rm -f /vscode.sh

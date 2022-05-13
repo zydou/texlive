@@ -5,9 +5,10 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - .github/workflows/build-latest.yml
-      - README.md
+    paths:
+      - .github/workflows/build-historic-vscode.yml
+      - vscode.Dockerfile
+      - vscode.sh
 permissions: write-all
 
 jobs:
@@ -45,9 +46,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: |
-            VERSION=${{ matrix.version }}
-            SCHEME=${{ matrix.scheme }}
+          build-args: TAG=${{ matrix.version }}-${{ matrix.scheme }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:${{ matrix.version }}-${{ matrix.scheme }}-vscode
             ${{ github.repository_owner }}/texlive:${{ matrix.version }}-${{ matrix.scheme }}-vscode
@@ -59,9 +58,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: |
-            VERSION=${{ matrix.version }}
-            SCHEME=${{ matrix.scheme }}
+          build-args: TAG=${{ matrix.version }}-${{ matrix.scheme }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:${{ matrix.version }}-vscode
             ghcr.io/${{ github.repository_owner }}/texlive:${{ matrix.version }}-${{ matrix.scheme }}-vscode
@@ -90,9 +87,6 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v3
-      - name: Prepare
-        run: |
-          sed -i 's#tlpdbopt_install_docfiles 0#tlpdbopt_install_docfiles 1#' texlive.profile
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -116,9 +110,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: |
-            VERSION=${{ matrix.version }}
-            SCHEME=${{ matrix.scheme }}
+          build-args: TAG=${{ matrix.version }}-${{ matrix.scheme }}-doc
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:${{ matrix.version }}-${{ matrix.scheme }}-doc-vscode
             ${{ github.repository_owner }}/texlive:${{ matrix.version }}-${{ matrix.scheme }}-doc-vscode
@@ -130,9 +122,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: |
-            VERSION=${{ matrix.version }}
-            SCHEME=${{ matrix.scheme }}
+          build-args: TAG=${{ matrix.version }}-${{ matrix.scheme }}-doc
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:${{ matrix.version }}-doc-vscode
             ghcr.io/${{ github.repository_owner }}/texlive:${{ matrix.version }}-${{ matrix.scheme }}-doc-vscode

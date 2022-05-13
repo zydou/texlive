@@ -8,8 +8,7 @@ on:
     paths:
       - .github/workflows/build-latest-vscode.yml
       - vscode.Dockerfile
-      - setup.vscode.sh
-      - vscode-only.sh
+      - vscode.sh
 permissions: write-all
 
 jobs:
@@ -23,9 +22,6 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v3
-      - name: Prepare
-        run: |
-          sed -i 's#tug/historic/systems/texlive/${VERSION}/tlnet-final#tex/systems/texlive/tlnet#' setup.vscode.sh
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -49,7 +45,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: SCHEME=${{ matrix.scheme }}
+          build-args: TAG=latest-${{ matrix.scheme }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode
@@ -63,7 +59,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: SCHEME=${{ matrix.scheme }}
+          build-args: TAG=latest-${{ matrix.scheme }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-vscode
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-vscode
@@ -94,10 +90,6 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v3
-      - name: Prepare
-        run: |
-          sed -i 's#tug/historic/systems/texlive/${VERSION}/tlnet-final#tex/systems/texlive/tlnet#' setup.vscode.sh
-          sed -i 's#tlpdbopt_install_docfiles 0#tlpdbopt_install_docfiles 1#' texlive.profile
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -121,7 +113,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: SCHEME=${{ matrix.scheme }}
+          build-args: TAG=latest-${{ matrix.scheme }}-doc
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode
@@ -135,7 +127,7 @@ jobs:
           file: vscode.Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: SCHEME=${{ matrix.scheme }}
+          build-args: TAG=latest-${{ matrix.scheme }}-doc
           tags: |
             ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-vscode
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-vscode
