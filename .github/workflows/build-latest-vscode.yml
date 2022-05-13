@@ -10,8 +10,6 @@ on:
       - vscode.Dockerfile
       - setup.vscode.sh
       - vscode-only.sh
-  schedule:
-    - cron: '0 0 1 * *'
 permissions: write-all
 
 jobs:
