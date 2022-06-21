@@ -67,7 +67,7 @@ ${binpath} --force --extensions-dir ${extdir} --install-extension streetsidesoft
 ${binpath} --force --extensions-dir ${extdir} --install-extension JeffersonQin.latex-snippets-jeff
 
 # update CTAN packages
-tlmgr update --all
+tlmgr update --self --all
 
 # cleanup
 apk del -r curl
