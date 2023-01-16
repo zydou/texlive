@@ -22,27 +22,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
       - name: Set date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@master
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@master
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@master
         with:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWD }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@master
         if: ${{ matrix.scheme != 'full' }}
         with:
           context: .
@@ -55,12 +55,12 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}
             ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}
-            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ env.date }}
       - name: Tag year only for scheme-full
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@master
         if: ${{ matrix.scheme == 'full' }}
         with:
           context: .
@@ -77,14 +77,14 @@ jobs:
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}
             ${{ github.repository_owner }}/texlive:latest
             ${{ github.repository_owner }}/texlive:2022
-            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:latest-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:2022-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:latest-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:2022-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:latest-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:2022-nightly-${{ env.date }}
       - name: Test
         run: |
           docker run --rm ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }} pdflatex --version
@@ -105,27 +105,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
       - name: Set date
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@master
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@master
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@master
         with:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWD }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@master
         if: ${{ matrix.scheme != 'full' }}
         with:
           context: .
@@ -138,12 +138,12 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc
             ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc
-            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
       - name: Tag year only for scheme-full
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@master
         if: ${{ matrix.scheme == 'full' }}
         with:
           context: .
@@ -160,14 +160,14 @@ jobs:
             ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc
             ${{ github.repository_owner }}/texlive:latest-doc
             ${{ github.repository_owner }}/texlive:2022-doc
-            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:latest-doc-nightly-${{ steps.date.outputs.date }}
-            ghcr.io/${{ github.repository_owner }}/texlive:2022-doc-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:latest-doc-nightly-${{ steps.date.outputs.date }}
-            ${{ github.repository_owner }}/texlive:2022-doc-nightly-${{ steps.date.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:latest-doc-nightly-${{ env.date }}
+            ghcr.io/${{ github.repository_owner }}/texlive:2022-doc-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:2022-${{ matrix.scheme }}-doc-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:latest-doc-nightly-${{ env.date }}
+            ${{ github.repository_owner }}/texlive:2022-doc-nightly-${{ env.date }}
       - name: Test
         run: |
           docker run --rm ghcr.io/${{ github.repository_owner }}/texlive:latest-${{ matrix.scheme }}-doc pdflatex --version
@@ -186,16 +186,10 @@ jobs:
     needs: [build, build-with-doc]
     runs-on: ubuntu-latest
     steps:
-      - name: Delete untagged
-        uses: dylanratcliffe/delete-untagged-containers@main
-        with:
-          package_name: texlive
-          token: ${{ secrets.PAT }}
-          user: ${{ github.repository_owner }}
       - name: Set up Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
       - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@v2
+        uses: peter-evans/dockerhub-description@main
         with:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWD }}
