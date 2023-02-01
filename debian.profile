@@ -20,5 +20,4 @@ tlpdbopt_generate_updmap 0
 tlpdbopt_install_docfiles 1
 tlpdbopt_install_srcfiles 0
 tlpdbopt_post_code 1
-tlpdbopt_sys_bin /usr/bin
-
+tlpdbopt_sys_bin /usr/local/bin
