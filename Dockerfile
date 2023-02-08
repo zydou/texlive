@@ -1,4 +1,4 @@
-FROM debian:testing-slim
+FROM debian:11-slim
 ENV TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NOPERLDOC=1
@@ -6,8 +6,7 @@ ARG MIRROR_URL=rsync://texlive.info/CTAN/systems/texlive/tlnet/
 COPY texlive.profile /tmp/texlive.profile
 
 # https://gitlab.com/islandoftex/images/texlive/-/blob/master/Dockerfile.base
-RUN sed -i "s/main/main contrib non-free/" /etc/apt/sources.list && \
-    apt-get update -qq && \
+RUN apt-get update -qq && \
     # basic utilities for TeX Live installation
     apt-get install -qq -y --no-install-recommends curl git wget rsync unzip \
     # miscellaneous dependencies for TeX Live tools

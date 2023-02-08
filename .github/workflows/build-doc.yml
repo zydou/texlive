@@ -1,4 +1,4 @@
-name: Build
+name: Build Doc
 
 on:
   workflow_dispatch:
@@ -6,9 +6,10 @@ on:
     branches:
       - master
     paths:
-      - .github/workflows/build.yml
+      - .github/workflows/build-doc.yml
       - Dockerfile
       - texlive.profile
+
 jobs:
   build-latest:
     name: latest
@@ -16,6 +17,10 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@main
+      - name: Add install doc option
+        run: |
+          sed -i 's/tlpdbopt_install_docfiles 0/tlpdbopt_install_docfiles 1/' texlive.profile
+          cat texlive.profile
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
@@ -35,11 +40,11 @@ jobs:
           build-args: |
             MIRROR_URL=rsync://mirrors.bfsu.edu.cn/CTAN/systems/texlive/tlnet/
           tags: |
-            ${{ github.repository_owner }}/texlive:latest
-            ${{ github.repository_owner }}/texlive:2022
+            ${{ github.repository_owner }}/texlive:latest-doc
+            ${{ github.repository_owner }}/texlive:2022-doc
       - name: Test
         run: |
-          docker run --rm ${{ github.repository_owner }}/texlive:latest pdflatex --version
+          docker run --rm ${{ github.repository_owner }}/texlive:latest-doc pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -47,7 +52,7 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v $(pwd):/data -w /data ${{ github.repository_owner }}/texlive:latest pdflatex test.tex
+          docker run --rm -v $(pwd):/data -w /data ${{ github.repository_owner }}/texlive:latest-doc pdflatex test.tex
           file test.pdf | grep -q ' PDF '
   build-historic:
     strategy:
@@ -60,6 +65,10 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@main
+      - name: Add install doc option
+        run: |
+          sed -i 's/tlpdbopt_install_docfiles 0/tlpdbopt_install_docfiles 1/' texlive.profile
+          cat texlive.profile
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
@@ -79,10 +88,10 @@ jobs:
           build-args: |
             MIRROR_URL=rsync://texlive.info/historic/systems/texlive/${{matrix.year}}/tlnet-final/
           tags: |
-            ${{ github.repository_owner }}/texlive:${{ matrix.year }}
+            ${{ github.repository_owner }}/texlive:${{ matrix.year }}-doc
       - name: Test
         run: |
-          docker run --rm ${{ github.repository_owner }}/texlive:${{ matrix.year }} pdflatex --version
+          docker run --rm ${{ github.repository_owner }}/texlive:${{ matrix.year }}-doc pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -90,5 +99,5 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v $(pwd):/data -w /data ${{ github.repository_owner }}/texlive:${{ matrix.year }} pdflatex test.tex
+          docker run --rm -v $(pwd):/data -w /data ${{ github.repository_owner }}/texlive:${{ matrix.year }}-doc pdflatex test.tex
           file test.pdf | grep -q ' PDF '
