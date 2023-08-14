@@ -2,8 +2,11 @@ FROM debian:10-slim
 ENV TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NOPERLDOC=1
-ARG MIRROR_URL=rsync://texlive.info/CTAN/systems/texlive/tlnet/
+ARG MIRROR_URL=rsync://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
 COPY texlive.profile /tmp/texlive.profile
+
+# use bash instead of sh
+SHELL ["/bin/bash", "-c"]
 
 # https://gitlab.com/islandoftex/images/texlive/-/blob/master/Dockerfile.base
 RUN apt-get update -qq && \
@@ -29,6 +32,8 @@ RUN apt-get update -qq && \
     echo "Using mirror: $MIRROR_URL" && \
     rsync -axz --delete $MIRROR_URL /tmp/texlive && \
     /tmp/texlive/install-tl --profile /tmp/texlive.profile --repository /tmp/texlive && \
+    # fix repository url
+    tlmgr option repository "${MIRROR_URL/rsync/https}" && \
     # cleanup
     apt-get autoremove -y rsync && \
     rm -rf /tmp/* && \
