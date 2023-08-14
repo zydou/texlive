@@ -1,4 +1,4 @@
-FROM debian:11-slim
+FROM debian:10-slim
 ENV TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NOPERLDOC=1
@@ -27,7 +27,7 @@ RUN apt-get update -qq && \
     # install texlive
     mkdir -p /tmp/texlive && \
     echo "Using mirror: $MIRROR_URL" && \
-    rsync -axz --zc=zstd --delete $MIRROR_URL /tmp/texlive && \
+    rsync -axz --delete $MIRROR_URL /tmp/texlive && \
     /tmp/texlive/install-tl --profile /tmp/texlive.profile --repository /tmp/texlive && \
     # cleanup
     apt-get autoremove -y rsync && \
