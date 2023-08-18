@@ -1,0 +1,52 @@
+---
+name: Download Historic
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/download-texlive-historic.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  historic:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        year: [2018, 2019, 2020, 2021, 2022]
+    name: Download ${{ matrix.year }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+
+      - name: Generate release notes
+        run: |
+          echo 'This is texlive-${{matrix.year}} release' > RELEASE.md
+          echo 'Please download all `texlive_${{matrix.year}}_part_X` files first.' >> RELEASE.md
+          echo 'Then run `cat texlive_${{matrix.year}}_part_* > texlive.tar` to get the final tar file.' >> RELEASE.md
+          echo 'Finally, run `tar -xf texlive.tar` to extract the files.' >> RELEASE.md
+          cat RELEASE.md
+
+      - name: Download
+        run: |-
+          mkdir -p texlive
+          rsync -axz --delete "rsync://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/${{matrix.year}}/tlnet-final/" texlive
+          tar -cf archive.tar texlive
+          rm -rf texlive
+          split -d -n 4 archive.tar "texlive_${{matrix.year}}_part"
+          rm -f archive.tar
+          ls -lh
+
+      - name: Upload to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          gh release delete "texlive-${{matrix.year}}" --cleanup-tag --yes || true
+          gh release create "texlive-${{matrix.year}}" --title "texlive-${{matrix.year}}" --notes-file RELEASE.md ./texlive_${{matrix.year}}_part*
