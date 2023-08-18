@@ -1,20 +1,27 @@
-FROM debian:10-slim
+ARG DEBIAN_VERSION=trixie
+FROM debian:${DEBIAN_VERSION}-slim
 ENV TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NOPERLDOC=1
 ARG YEAR=2018
 ARG MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/2018/tlnet-final/
 
+# ARG declared before a FROM is outside of a build stage.
+# To use the default value of an ARG declared before FROM, declare an empty ARG
+ARG DEBIAN_VERSION
+
 # use bash instead of sh
 SHELL ["/bin/bash", "-c"]
 
 # from https://gitlab.com/islandoftex/images/texlive/-/blob/master/Dockerfile.base
 RUN apt-get update -qq && \
+    # do not install libncurses5 on trixie
+    if [[ "${DEBIAN_VERSION}" != "trixie" ]]; then apt-get install -qq -y --no-install-recommends libncurses5; fi && \
     # basic utilities for TeX Live installation
     apt-get install -qq -y --no-install-recommends curl git wget unzip \
     # miscellaneous dependencies for TeX Live tools
     make fontconfig perl default-jre libgetopt-long-descriptive-perl \
-    libdigest-perl-md5-perl libncurses5 libncurses6 \
+    libdigest-perl-md5-perl libncurses6 \
     # for latexindent (see #13)
     libunicode-linebreak-perl libfile-homedir-perl libyaml-tiny-perl \
     # for eps conversion (see #14)

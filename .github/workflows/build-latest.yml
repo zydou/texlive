@@ -18,12 +18,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-latest:
+  build-latest-simplified-suffix:
     strategy:
       fail-fast: false
       matrix:
         year: [2023]
-    name: Build ${{ matrix.year }}
+        debian: [trixie]  # use trixie as default debian version
+    name: Build ${{ matrix.year }} on Debian-${{ matrix.debian }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Git repository
@@ -47,12 +48,16 @@ jobs:
           build-args: |
             MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
             YEAR=${{matrix.year}}
+            DEBIAN_VERSION=${{matrix.debian}}
           tags: |
             zydou/texlive:latest
+            zydou/texlive:latest-${{matrix.debian}}
             zydou/texlive:${{matrix.year}}
+            zydou/texlive:${{matrix.year}}-${{matrix.debian}}
+            zydou/texlive:${{matrix.debian}}
       - name: Test
         run: |
-          docker run --rm zydou/texlive:${{ matrix.year }} pdflatex --version
+          docker run --rm zydou/texlive:${{ matrix.year }}-${{matrix.debian}} pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -60,7 +65,55 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }} pdflatex test.tex
+          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }}-${{matrix.debian}} pdflatex test.tex
+          file test.pdf | grep -q ' PDF '
+
+  build-latest-full-suffix:
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2023]
+        debian: [buster, bullseye, bookworm]
+    name: Build ${{ matrix.year }} on Debian-${{ matrix.debian }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login to DockerHub
+        uses: docker/login-action@master
+        with:
+          username: zydou
+          password: ${{ secrets.DOCKER_PASSWD }}
+      - name: Build and push
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
+            YEAR=${{matrix.year}}
+            DEBIAN_VERSION=${{matrix.debian}}
+          tags: |
+            zydou/texlive:latest-${{matrix.debian}}
+            zydou/texlive:${{matrix.debian}}
+            zydou/texlive:${{matrix.year}}-${{matrix.debian}}
+      - name: Test
+        run: |
+          docker run --rm zydou/texlive:${{ matrix.year }}-${{matrix.debian}} pdflatex --version
+          cat <<EOF >test.tex
+          \documentclass{article}
+          \usepackage{amsfonts}
+          \begin{document}
+          test
+          \end{document}
+          EOF
+          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }}-${{matrix.debian}} pdflatex test.tex
           file test.pdf | grep -q ' PDF '
 
   dockerhub:
