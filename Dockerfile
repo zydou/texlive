@@ -2,16 +2,16 @@ FROM debian:10-slim
 ENV TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NOPERLDOC=1
-ARG MIRROR_URL=rsync://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
-COPY texlive.profile /tmp/texlive.profile
+ARG YEAR=2018
+ARG MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/2018/tlnet-final/
 
 # use bash instead of sh
 SHELL ["/bin/bash", "-c"]
 
-# https://gitlab.com/islandoftex/images/texlive/-/blob/master/Dockerfile.base
+# from https://gitlab.com/islandoftex/images/texlive/-/blob/master/Dockerfile.base
 RUN apt-get update -qq && \
     # basic utilities for TeX Live installation
-    apt-get install -qq -y --no-install-recommends curl git wget rsync unzip \
+    apt-get install -qq -y --no-install-recommends curl git wget unzip \
     # miscellaneous dependencies for TeX Live tools
     make fontconfig perl default-jre libgetopt-long-descriptive-perl \
     libdigest-perl-md5-perl libncurses5 libncurses6 \
@@ -27,16 +27,25 @@ RUN apt-get update -qq && \
     gnuplot-nox && \
     # bad fix for python handling
     ln -s /usr/bin/python3 /usr/bin/python && \
-    # install texlive
-    mkdir -p /tmp/texlive && \
-    echo "Using mirror: $MIRROR_URL" && \
-    rsync -axz --delete $MIRROR_URL /tmp/texlive && \
-    /tmp/texlive/install-tl --profile /tmp/texlive.profile --repository /tmp/texlive && \
-    # fix repository url
-    tlmgr option repository "${MIRROR_URL/rsync/https}" && \
     # cleanup
-    apt-get autoremove -y rsync && \
     rm -rf /tmp/* && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/cache/apt/ && \
+    rm -rf /var/cache/apt/
+
+# install texlive
+COPY texlive.profile /tmp/texlive.profile
+RUN mkdir -p /tmp/texlive && \
+    curl -sSLf -o "/tmp/texlive_part00" "https://github.com/zydou/texlive/releases/download/texlive-${YEAR}/texlive_${YEAR}_part00" && \
+    curl -sSLf -o "/tmp/texlive_part01" "https://github.com/zydou/texlive/releases/download/texlive-${YEAR}/texlive_${YEAR}_part01" && \
+    curl -sSLf -o "/tmp/texlive_part02" "https://github.com/zydou/texlive/releases/download/texlive-${YEAR}/texlive_${YEAR}_part02" && \
+    curl -sSLf -o "/tmp/texlive_part03" "https://github.com/zydou/texlive/releases/download/texlive-${YEAR}/texlive_${YEAR}_part03" && \
+    cat /tmp/texlive_part* > /tmp/archive.tar && \
+    rm -f /tmp/texlive_part* && \
+    tar -xf /tmp/archive.tar -C /tmp/texlive --strip-components=1 && \
+    rm -f /tmp/archive.tar && \
+    /tmp/texlive/install-tl --profile /tmp/texlive.profile --repository /tmp/texlive && \
+    # fix repository url
+    /usr/local/bin/tlmgr option repository "${MIRROR_URL}" && \
+    # cleanup
+    rm -rf /tmp/* && \
     rm -f /usr/local/texlive/texdir/install-tl.log

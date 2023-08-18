@@ -19,7 +19,6 @@ jobs:
   build-historic:
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
         year: [2022, 2021, 2020, 2019, 2018]
     name: Build ${{ matrix.year }}
@@ -44,7 +43,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
-            MIRROR_URL=rsync://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/${{matrix.year}}/tlnet-final/
+            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/${{matrix.year}}/tlnet-final/
+            YEAR=${{matrix.year}}
           tags: |
             zydou/texlive:${{ matrix.year }}
       - name: Test

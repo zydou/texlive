@@ -19,7 +19,11 @@ concurrency:
 
 jobs:
   build-latest:
-    name: latest
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2023]
+    name: Build ${{ matrix.year }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Git repository
@@ -41,13 +45,14 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
-            MIRROR_URL=rsync://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
+            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
+            YEAR=${{matrix.year}}
           tags: |
             zydou/texlive:latest
-            zydou/texlive:2023
+            zydou/texlive:${{matrix.year}}
       - name: Test
         run: |
-          docker run --rm zydou/texlive:latest pdflatex --version
+          docker run --rm zydou/texlive:${{ matrix.year }} pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -55,5 +60,19 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:latest pdflatex test.tex
+          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }} pdflatex test.tex
           file test.pdf | grep -q ' PDF '
+
+  dockerhub:
+    name: Docker Hub Description
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@main
+        with:
+          username: zydou
+          password: ${{ secrets.DOCKER_PASSWD }}
+          repository: zydou/texlive
+          short-description: texlive docker images
+          readme-filepath: README.md
