@@ -7,11 +7,6 @@ on:
     workflows: [Build Latest]
     types:
       - completed
-  push:
-    branches:
-      - master
-    paths:
-      - .github/workflows/generate-pkg-version.yml
 
 permissions: write-all
 concurrency:
@@ -24,9 +19,9 @@ jobs:
       fail-fast: true
       matrix:
         texlive: [2018, 2019, 2020, 2021, 2022, 2023]
-        debian: [buster, bullseye, bookworm, trixie]
+        base_os: [buster, bullseye, bookworm, trixie, xenial, bionic, focal, jammy]
         arch: [amd64, arm64]
-    name: ${{matrix.texlive}}-${{matrix.debian}} (${{matrix.arch}})
+    name: ${{matrix.texlive}}-${{matrix.base_os}} (${{matrix.arch}})
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,18 +30,18 @@ jobs:
         uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@master
-      - name: ${{matrix.texlive}}-${{matrix.debian}} (${{matrix.arch}})
+      - name: ${{matrix.texlive}}-${{matrix.base_os}} (${{matrix.arch}})
         run: |
-          docker pull --platform linux/${{matrix.arch}} zydou/devcontainer-latex:${{matrix.texlive}}-${{matrix.debian}}
+          docker pull --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}}
           echo "Package,Version" > texlive-packages.csv
-          docker run --rm --platform linux/${{matrix.arch}} zydou/devcontainer-latex:${{matrix.texlive}}-${{matrix.debian}} tlmgr info --only-installed --data "name,cat-version" >> texlive-packages.csv
+          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}} tlmgr info --only-installed --data "name,cat-version" >> texlive-packages.csv
           echo "Package,Version" > system-packages.csv
-          docker run --rm --platform linux/${{matrix.arch}} zydou/devcontainer-latex:${{matrix.texlive}}-${{matrix.debian}} dpkg-query -W -f='${Package},${Version}\n' >> system-packages.csv
-          docker rmi zydou/devcontainer-latex:${{matrix.texlive}}-${{matrix.debian}}
+          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}} dpkg-query -W -f='${Package},${Version}\n' >> system-packages.csv
+          docker rmi zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}}
       - name: Upload artifacts
         uses: actions/upload-artifact@main
         with:
-          name: texlive-${{matrix.texlive}}-${{matrix.debian}}-${{matrix.arch}}
+          name: texlive-${{matrix.texlive}}-${{matrix.base_os}}-${{matrix.arch}}
           path: |
             ./*.csv
   push:
