@@ -16,9 +16,9 @@ SHELL ["/bin/bash", "-c"]
 # from https://gitlab.com/islandoftex/images/texlive/-/blob/master/Dockerfile.base
 RUN apt-get update -qq && \
     # do not install libncurses5 on trixie
-    if [[ "${DEBIAN_VERSION}" != "trixie" ]]; then apt-get install -qq -y --no-install-recommends libncurses5; fi && \
+    if [[ "${DEBIAN_VERSION}" != "trixie" ]]; then apt-get install -qq -y --no-install-recommends --no-upgrade libncurses5; fi && \
     # basic utilities for TeX Live installation
-    apt-get install -qq -y --no-install-recommends curl git wget unzip \
+    apt-get install -qq -y --no-install-recommends --no-upgrade curl git wget unzip \
     # miscellaneous dependencies for TeX Live tools
     make fontconfig perl default-jre libgetopt-long-descriptive-perl \
     libdigest-perl-md5-perl libncurses6 \
@@ -29,7 +29,7 @@ RUN apt-get update -qq && \
     # for metafont (see #24)
     libsm6 \
     # for syntax highlighting
-    python3 python3-pygments \
+    python3 python3-pkg-resources python3-pygments \
     # for gnuplot backend of pgfplots (see !13)
     gnuplot-nox && \
     # bad fix for python handling
