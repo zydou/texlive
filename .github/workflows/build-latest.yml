@@ -11,11 +11,11 @@ on:
     paths:
       - .github/workflows/build-latest.yml
       - Dockerfile
-      - texlive.profile
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+permissions: write-all
 
 jobs:
   build-latest-simplified-suffix:
@@ -27,10 +27,20 @@ jobs:
     name: Build ${{ matrix.year }} on ${{ matrix.base_os }}
     runs-on: ubuntu-latest
     steps:
+      - name: Maximize build space
+        run: |
+          # Remove .Net
+          sudo rm -rf /usr/share/dotnet
+          # Remove Android
+          sudo rm -rf /usr/local/lib/android
+          # Remove Haskell
+          sudo rm -rf /opt/ghc
+          # Remove CodeQL
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          # Remove docker images
+          sudo docker image prune --all --force
       - name: Set up Git repository
         uses: actions/checkout@main
-      - name: Delete built-in docker images to get more disk space
-        run: docker system prune --all --volumes --force
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
@@ -40,17 +50,12 @@ jobs:
         with:
           username: zydou
           password: ${{ secrets.DOCKER_PASSWD }}
-      - name: set BASE_IMG and OS_VARIANT ENV
-        run: |
-          if [[ "${{matrix.base_os}}" = "buster" || ${{matrix.base_os}} = "bullseye" || ${{matrix.base_os}} = "bookworm" || ${{matrix.base_os}} = "trixie" ]]; then
-          echo "BASE_IMG=debian" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}-slim" >> "${GITHUB_ENV}"
-          echo "using base image: debian:${{matrix.base_os}}-slim"
-          else
-          echo "BASE_IMG=ubuntu" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}" >> "${GITHUB_ENV}"
-          echo "using base image: ubuntu:${{matrix.base_os}}"
-          fi
+      - name: Login to GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@master
         with:
@@ -59,19 +64,20 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
-            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
             YEAR=${{matrix.year}}
-            BASE_IMG=${{env.BASE_IMG}}
-            OS_VARIANT=${{env.OS_VARIANT}}
+            BASE_OS=${{matrix.base_os}}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
+          target: normal
           tags: |
-            zydou/texlive:latest
-            zydou/texlive:latest-${{matrix.base_os}}
-            zydou/texlive:${{matrix.year}}
-            zydou/texlive:${{matrix.year}}-${{matrix.base_os}}
-            zydou/texlive:${{matrix.base_os}}
+            ${{github.repository}}:latest
+            ${{github.repository}}:latest-${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.year}}
+            ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.base_os}}
       - name: Test
         run: |
-          docker run --rm zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex --version
+          docker run --rm ${{github.repository}}:${{ matrix.year }}-${{matrix.base_os}} pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -79,7 +85,7 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex test.tex
+          docker run --rm -v "$(pwd)":/data -w /data ${{github.repository}}:${{ matrix.year }}-${{matrix.base_os}} pdflatex test.tex
           file test.pdf | grep -q ' PDF '
 
   build-latest-full-suffix:
@@ -91,10 +97,20 @@ jobs:
     name: Build ${{ matrix.year }} on ${{ matrix.base_os }}
     runs-on: ubuntu-latest
     steps:
+      - name: Maximize build space
+        run: |
+          # Remove .Net
+          sudo rm -rf /usr/share/dotnet
+          # Remove Android
+          sudo rm -rf /usr/local/lib/android
+          # Remove Haskell
+          sudo rm -rf /opt/ghc
+          # Remove CodeQL
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          # Remove docker images
+          sudo docker image prune --all --force
       - name: Set up Git repository
         uses: actions/checkout@main
-      - name: Delete built-in docker images to get more disk space
-        run: docker system prune --all --volumes --force
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
@@ -104,18 +120,15 @@ jobs:
         with:
           username: zydou
           password: ${{ secrets.DOCKER_PASSWD }}
-      - name: set BASE_IMG and OS_VARIANT ENV
-        run: |
-          if [[ "${{matrix.base_os}}" = "buster" || ${{matrix.base_os}} = "bullseye" || ${{matrix.base_os}} = "bookworm" || ${{matrix.base_os}} = "trixie" ]]; then
-          echo "BASE_IMG=debian" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}-slim" >> "${GITHUB_ENV}"
-          echo "using base image: debian:${{matrix.base_os}}-slim"
-          else
-          echo "BASE_IMG=ubuntu" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}" >> "${GITHUB_ENV}"
-          echo "using base image: ubuntu:${{matrix.base_os}}"
-          fi
+      - name: Login to GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push
+        if: matrix.base_os != 'xenial' && matrix.base_os != 'bionic'
         uses: docker/build-push-action@master
         with:
           context: .
@@ -123,17 +136,36 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
-            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
             YEAR=${{matrix.year}}
-            BASE_IMG=${{env.BASE_IMG}}
-            OS_VARIANT=${{env.OS_VARIANT}}
+            BASE_OS=${{matrix.base_os}}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
+          target: normal
           tags: |
-            zydou/texlive:latest-${{matrix.base_os}}
-            zydou/texlive:${{matrix.base_os}}
-            zydou/texlive:${{matrix.year}}-${{matrix.base_os}}
+            ${{github.repository}}:latest-${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
+      - name: Build and push (Old GLIBC)
+        if: matrix.base_os == 'xenial' || matrix.base_os == 'bionic'
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            YEAR=${{matrix.year}}
+            BASE_OS=${{matrix.base_os}}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{github.repository}}:${{matrix.base_os}}-baseimg
+          target: old-glibc
+          tags: |
+            ${{github.repository}}:latest-${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
       - name: Test
         run: |
-          docker run --rm zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex --version
+          docker run --rm ${{github.repository}}:${{ matrix.year }}-${{matrix.base_os}} pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -141,19 +173,5 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex test.tex
+          docker run --rm -v "$(pwd)":/data -w /data ${{github.repository}}:${{ matrix.year }}-${{matrix.base_os}} pdflatex test.tex
           file test.pdf | grep -q ' PDF '
-
-  dockerhub:
-    name: Docker Hub Description
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@main
-        with:
-          username: zydou
-          password: ${{ secrets.DOCKER_PASSWD }}
-          repository: zydou/texlive
-          short-description: texlive docker images
-          readme-filepath: README.md

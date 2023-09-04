@@ -1,0 +1,95 @@
+---
+name: Build Historic Tree
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/build-historic-tree.yml
+      - tree.Dockerfile
+      - texlive.profile
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions: write-all
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2023, 2022, 2021, 2020, 2019, 2018]
+    name: Build ${{ matrix.year }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Maximize build space
+        run: |
+          # Remove .Net
+          sudo rm -rf /usr/share/dotnet
+          # Remove Android
+          sudo rm -rf /usr/local/lib/android
+          # Remove Haskell
+          sudo rm -rf /opt/ghc
+          # Remove CodeQL
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          # Remove docker images
+          sudo docker image prune --all --force
+      - name: Set up Git repository
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login to DockerHub
+        uses: docker/login-action@master
+        with:
+          username: zydou
+          password: ${{ secrets.DOCKER_PASSWD }}
+      - name: Login to GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push (latest texlive year)
+        if: matrix.year == 2023
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          file: tree.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            BASE_OS=trixie
+            YEAR=${{matrix.year}}
+            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/CTAN/systems/texlive/tlnet/
+          cache-from: |
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-trixie-baseimg
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-sources
+          cache-to: type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-sources,mode=max
+          target: data
+          tags: |
+            ghcr.io/${{github.repository}}:${{matrix.year}}-sources
+
+      - name: Build and push (old texlive year)
+        if: matrix.year != 2023
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          file: tree.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            BASE_OS=trixie
+            YEAR=${{matrix.year}}
+            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/${{matrix.year}}/tlnet-final/
+          cache-from: |
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-trixie-baseimg
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-sources
+          cache-to: type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-sources,mode=max
+          target: data
+          tags: |
+            ghcr.io/${{github.repository}}:${{matrix.year}}-sources

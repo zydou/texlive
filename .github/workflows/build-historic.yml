@@ -8,21 +8,21 @@ on:
       - master
     paths:
       - .github/workflows/build-historic.yml
-      - Dockerfile
-      - texlive.profile
+      - historic.Dockerfile
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+permissions: write-all
 
 jobs:
   build-historic-simplified-suffix:
     strategy:
       fail-fast: false
       matrix:
-        year: [2022, 2021, 2020, 2019, 2018]
+        year: [2023, 2022, 2021, 2020, 2019, 2018]
         base_os: [trixie]  # use trixie as default base image
-    name: Build ${{ matrix.year }} on ${{ matrix.base_os }}
+    name: Build ${{matrix.year}} on ${{ matrix.base_os }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Git repository
@@ -38,35 +38,35 @@ jobs:
         with:
           username: zydou
           password: ${{ secrets.DOCKER_PASSWD }}
-      - name: set BASE_IMG and OS_VARIANT ENV
-        run: |
-          if [[ "${{matrix.base_os}}" = "buster" || ${{matrix.base_os}} = "bullseye" || ${{matrix.base_os}} = "bookworm" || ${{matrix.base_os}} = "trixie" ]]; then
-          echo "BASE_IMG=debian" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}-slim" >> "${GITHUB_ENV}"
-          echo "using base image: debian:${{matrix.base_os}}-slim"
-          else
-          echo "BASE_IMG=ubuntu" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}" >> "${GITHUB_ENV}"
-          echo "using base image: ubuntu:${{matrix.base_os}}"
-          fi
+      - name: Login to GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@master
         with:
           context: .
-          file: Dockerfile
+          file: historic.Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
-            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/${{matrix.year}}/tlnet-final/
             YEAR=${{matrix.year}}
-            BASE_IMG=${{env.BASE_IMG}}
-            OS_VARIANT=${{env.OS_VARIANT}}
+            BASE_OS=${{matrix.base_os}}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-sources
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.base_os}}-baseimg
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-${{matrix.base_os}}
+          cache-to: type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-${{matrix.base_os}},mode=max
           tags: |
-            zydou/texlive:${{ matrix.year }}
-            zydou/texlive:${{ matrix.year }}-${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.year}}
+            ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
+            ghcr.io/${{github.repository}}:${{matrix.year}}
+            ghcr.io/${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
       - name: Test
         run: |-
-          docker run --rm zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex --version
+          docker run --rm ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}} pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -74,16 +74,16 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex test.tex
+          docker run --rm -v "$(pwd)":/data -w /data ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}} pdflatex test.tex
           file test.pdf | grep -q ' PDF '
 
   build-historic-full-suffix:
     strategy:
       fail-fast: false
       matrix:
-        year: [2022, 2021, 2020, 2019, 2018]
+        year: [2023, 2022, 2021, 2020, 2019, 2018]
         base_os: [buster, bullseye, bookworm, xenial, bionic, focal, jammy]
-    name: Build ${{ matrix.year }} on ${{ matrix.base_os }}
+    name: Build ${{matrix.year}} on ${{ matrix.base_os }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Git repository
@@ -99,34 +99,33 @@ jobs:
         with:
           username: zydou
           password: ${{ secrets.DOCKER_PASSWD }}
-      - name: set BASE_IMG and OS_VARIANT ENV
-        run: |
-          if [[ "${{matrix.base_os}}" = "buster" || ${{matrix.base_os}} = "bullseye" || ${{matrix.base_os}} = "bookworm" || ${{matrix.base_os}} = "trixie" ]]; then
-          echo "BASE_IMG=debian" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}-slim" >> "${GITHUB_ENV}"
-          echo "using base image: debian:${{matrix.base_os}}-slim"
-          else
-          echo "BASE_IMG=ubuntu" >> "${GITHUB_ENV}"
-          echo "OS_VARIANT=${{matrix.base_os}}" >> "${GITHUB_ENV}"
-          echo "using base image: ubuntu:${{matrix.base_os}}"
-          fi
+      - name: Login to GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@master
         with:
           context: .
-          file: Dockerfile
+          file: historic.Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
-            MIRROR_URL=https://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/systems/texlive/${{matrix.year}}/tlnet-final/
             YEAR=${{matrix.year}}
-            BASE_IMG=${{env.BASE_IMG}}
-            OS_VARIANT=${{env.OS_VARIANT}}
+            BASE_OS=${{matrix.base_os}}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-sources
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.base_os}}-baseimg
+            type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-${{matrix.base_os}}
+          cache-to: type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.year}}-${{matrix.base_os}},mode=max
           tags: |
-            zydou/texlive:${{ matrix.year }}-${{matrix.base_os}}
+            ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
+            ghcr.io/${{github.repository}}:${{matrix.year}}-${{matrix.base_os}}
       - name: Test
         run: |-
-          docker run --rm zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex --version
+          docker run --rm ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}} pdflatex --version
           cat <<EOF >test.tex
           \documentclass{article}
           \usepackage{amsfonts}
@@ -134,5 +133,5 @@ jobs:
           test
           \end{document}
           EOF
-          docker run --rm -v "$(pwd)":/data -w /data zydou/texlive:${{ matrix.year }}-${{matrix.base_os}} pdflatex test.tex
+          docker run --rm -v "$(pwd)":/data -w /data ${{github.repository}}:${{matrix.year}}-${{matrix.base_os}} pdflatex test.tex
           file test.pdf | grep -q ' PDF '
