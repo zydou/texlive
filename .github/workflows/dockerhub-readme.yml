@@ -1,0 +1,29 @@
+---
+name: Get packages version
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - README.md
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dockerhub:
+    name: Docker Hub Description
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@main
+        with:
+          username: zydou
+          password: ${{ secrets.DOCKER_PASSWD }}
+          repository: ${{ github.repository }}
+          short-description: texlive docker images
+          readme-filepath: README.md
