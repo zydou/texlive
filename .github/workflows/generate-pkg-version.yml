@@ -14,14 +14,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  generate:
+  system-pkg:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: true
       matrix:
-        texlive: [2018, 2019, 2020, 2021, 2022, 2023]
         base_os: [buster, bullseye, bookworm, trixie, xenial, bionic, focal, jammy]
         arch: [amd64, arm64]
-    name: ${{matrix.texlive}}-${{matrix.base_os}} (${{matrix.arch}})
+    name: ${{matrix.base_os}} (${{matrix.arch}})
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,22 +30,48 @@ jobs:
         uses: docker/setup-qemu-action@master
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@master
-      - name: ${{matrix.texlive}}-${{matrix.base_os}} (${{matrix.arch}})
+      - name: ${{matrix.base_os}} (${{matrix.arch}})
         run: |
-          docker pull --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}}
-          echo "Package,Version" > texlive-packages.csv
-          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}} tlmgr info --only-installed --data "name,cat-version" >> texlive-packages.csv
+          docker pull --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.base_os}}
           echo "Package,Version" > system-packages.csv
-          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}} dpkg-query -W -f='${Package},${Version}\n' >> system-packages.csv
-          docker rmi zydou/texlive:${{matrix.texlive}}-${{matrix.base_os}}
+          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.base_os}} dpkg-query -W -f='${Package},${Version}\n' >> system-packages.csv
+          docker rmi zydou/texlive:${{matrix.base_os}}
       - name: Upload artifacts
         uses: actions/upload-artifact@main
         with:
-          name: texlive-${{matrix.texlive}}-${{matrix.base_os}}-${{matrix.arch}}
+          name: ${{matrix.base_os}}-${{matrix.arch}}
+          path: |
+            ./*.csv
+  texlive-pkg:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    strategy:
+      fail-fast: true
+      matrix:
+        texlive: [2018, 2019, 2020, 2021, 2022, 2023]
+        arch: [amd64, arm64]
+    name: ${{matrix.texlive}} (${{matrix.arch}})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: ${{matrix.texlive}} (${{matrix.arch}})
+        run: |
+          docker pull --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}
+          echo "Package,Version" > texlive-packages.csv
+          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}} tlmgr info --only-installed --data "name,cat-version" >> texlive-packages.csv
+          docker rmi zydou/texlive:${{matrix.texlive}}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@main
+        with:
+          name: texlive-${{matrix.texlive}}-${{matrix.arch}}
           path: |
             ./*.csv
   push:
-    needs: generate
+    needs: [system-pkg, texlive-pkg]
     name: push pkg info
     runs-on: ubuntu-latest
     steps:
@@ -55,12 +81,16 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: artifacts
+      - name: Move csv file into single folder
+        run: |
+          mkdir -p publish_dir
+          find artifacts -type f -name "*.csv" -exec cp {} publish_dir \;
       - name: Push artifacts to Github
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: pkg-info
-          publish_dir: ./artifacts
+          publish_dir: ./publish_dir
           force_orphan: true
           enable_jekyll: true
           full_commit_message: ${{ github.event.head_commit.message }}
