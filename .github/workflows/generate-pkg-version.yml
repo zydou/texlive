@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   system-pkg:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: true
       matrix:
@@ -33,8 +33,8 @@ jobs:
       - name: ${{matrix.base_os}} (${{matrix.arch}})
         run: |
           docker pull --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.base_os}}
-          echo "Package,Version" > system-packages.csv
-          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.base_os}} dpkg-query -W -f='${Package},${Version}\n' >> system-packages.csv
+          echo "Package,Version" > system-${{matrix.base_os}}-${{matrix.arch}}.csv
+          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.base_os}} dpkg-query -W -f='${Package},${Version}\n' >> system-${{matrix.base_os}}-${{matrix.arch}}.csv
           docker rmi zydou/texlive:${{matrix.base_os}}
       - name: Upload artifacts
         uses: actions/upload-artifact@main
@@ -43,7 +43,7 @@ jobs:
           path: |
             ./*.csv
   texlive-pkg:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: true
       matrix:
@@ -61,8 +61,8 @@ jobs:
       - name: ${{matrix.texlive}} (${{matrix.arch}})
         run: |
           docker pull --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}}
-          echo "Package,Version" > texlive-packages.csv
-          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}} tlmgr info --only-installed --data "name,cat-version" >> texlive-packages.csv
+          echo "Package,Version" > texlive-${{matrix.texlive}}-${{matrix.arch}}.csv
+          docker run --rm --platform linux/${{matrix.arch}} zydou/texlive:${{matrix.texlive}} tlmgr info --only-installed --data "name,cat-version" >> texlive-${{matrix.texlive}}-${{matrix.arch}}.csv
           docker rmi zydou/texlive:${{matrix.texlive}}
       - name: Upload artifacts
         uses: actions/upload-artifact@main
