@@ -66,8 +66,7 @@ If you are using a **very old** machine, start by trying the latest base image t
 
 ## Installed packages version
 
-You can check the [pkg-info](https://github.com/zydou/texlive/tree/pkg-info) branch to see the version of installed packages. For example, the [texlive-2023-trixie-amd64/texlive-packages.csv](https://github.com/zydou/texlive/blob/pkg-info/texlive-2023-trixie-amd64/texlive-packages.csv) contains the version of texlive packages installed in the `2023-trixie` image of the `amd64` arch, and the [texlive-2023-bookworm-arm64/system-packages.csv](https://github.com/zydou/texlive/blob/pkg-info/texlive-2023-bookworm-arm64/system-packages.csv) contains the version of system packages installed in the `2023-bookworm` image of the `arm64` arch.
-
+To check the versions of installed packages, you can refer to the [pkg-info](https://github.com/zydou/texlive/tree/pkg-info) branch. For instance, the [pkg-info/texlive-2023-amd64.csv](https://github.com/zydou/texlive/blob/pkg-info/texlive-2023-amd64.csv) file contains information about texlive 2023 package versions installed in the `amd64` architecture image. Similarly, the [pkg-info/system-bookworm-arm64.csv](https://github.com/zydou/texlive/blob/pkg-info/system-bookworm-arm64.csv) file provides details on system package versions of Debian bookworm installed in the `arm64` architecture image.
 ## See Also
 
 - [latex-template](https://github.com/zydou/latex-template): LaTeX Environment with VS Code Remote-Containers and GitHub Codespaces support.
