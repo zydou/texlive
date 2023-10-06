@@ -1,5 +1,5 @@
 ARG BASE_OS=trixie
-FROM ghcr.io/zydou/texlive:${BASE_OS}-baseimg AS installer
+FROM zydou/texlive:${BASE_OS}-baseimg AS installer
 ENV TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NOPERLDOC=1

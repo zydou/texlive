@@ -1,9 +1,9 @@
 ARG YEAR=2018
 ARG BASE_OS=trixie
 
-FROM ghcr.io/zydou/texlive:${YEAR}-sources as tree
+FROM zydou/texlive:${YEAR}-tree as tree
 
-FROM ghcr.io/zydou/texlive:${BASE_OS}-baseimg
+FROM zydou/texlive:${BASE_OS}-baseimg
 
 COPY --link --from=tree /usr/local/texlive /usr/local/texlive
 

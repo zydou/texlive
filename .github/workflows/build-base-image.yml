@@ -13,6 +13,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 permissions: write-all
 
 jobs:
@@ -36,12 +37,6 @@ jobs:
         with:
           username: zydou
           password: ${{ secrets.DOCKER_PASSWD }}
-      - name: Login to GHCR
-        uses: docker/login-action@master
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: set BASE_IMG and OS_VARIANT ENV
         run: |
           if [[ "${{matrix.base_os}}" = "buster" || ${{matrix.base_os}} = "bullseye" || ${{matrix.base_os}} = "bookworm" || ${{matrix.base_os}} = "trixie" ]]; then
@@ -60,10 +55,11 @@ jobs:
           file: base.Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
+          provenance: false
           build-args: |
             BASE_IMG=${{env.BASE_IMG}}
             OS_VARIANT=${{env.OS_VARIANT}}
-          cache-from: type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.base_os}}-baseimg
-          cache-to: type=registry,ref=ghcr.io/${{github.repository}}:cache-${{matrix.base_os}}-baseimg,mode=max
+          cache-from: type=registry,ref=zydou/texlive:cache-${{matrix.base_os}}-baseimg
+          cache-to: type=registry,ref=zydou/texlive:cache-${{matrix.base_os}}-baseimg,mode=max
           tags: |
-            ghcr.io/${{github.repository}}:${{matrix.base_os}}-baseimg
+            zydou/texlive:${{matrix.base_os}}-baseimg
