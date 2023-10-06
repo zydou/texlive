@@ -43,6 +43,7 @@ jobs:
           name: ${{matrix.base_os}}-${{matrix.arch}}
           path: |
             ./*.csv
+          retention-days: 1
   texlive-pkg:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     strategy:
@@ -71,6 +72,7 @@ jobs:
           name: texlive-${{matrix.texlive}}-${{matrix.arch}}
           path: |
             ./*.csv
+          retention-days: 1
   push:
     needs: [system-pkg, texlive-pkg]
     name: push pkg info
